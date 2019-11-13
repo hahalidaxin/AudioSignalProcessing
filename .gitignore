@@ -1,0 +1,4 @@
+test_data/
+training_data/
+__pycache__/
+.vscode/
