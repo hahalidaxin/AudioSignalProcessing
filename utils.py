@@ -1,3 +1,4 @@
+import pickle
 import re
 from collections import Counter
 from talk.mfcc import mfcc
@@ -22,20 +23,9 @@ class Speech:
         self.soundSamplerate, self.sound = wavfile.read(dirName + fileName)
         
         pattern = re.compile(r'(\d+)_(\d+)_(\d+).wav')
-        self.personId, self.categoryId, self.idx = pattern.match(self.filename)
-        
-        # category assignment
-        idx1 = self.fileName.find('_')
-        idx2 = self.fileName.find('.')
-        self.categoryId = fileName[idx1 + 1: idx2]   # speech category
+        self.personId, self.categoryId, self.idx = pattern.match(self.fileName).group(1,2,3)
 
     def extractFeature(self):
-        # ''' mfcc feature extraction '''
-
-        # y, sr = librosa.load(self.dirName + self.fileName, sr=None)
-        # tmp = librosa.feature.mfcc(y=y, sr=sr, n_mfcc=24)
-        # tmp = tmp.swapaxes(1,0)
-        # self.features = tmp
         ''' mfcc feature extraction '''
         self.features = mfcc(self.sound, nwin=int(
             self.soundSamplerate * 0.03), fs=self.soundSamplerate, nceps=24)[0]
@@ -63,39 +53,6 @@ class SpeechRecognizer:
         self.nComp = nComp  # number of states
         self.n_iter = n_iter    # number of iterations
 
-        # self.nMix = nMix   # number of mixtures
-        # self.covarianceType = covarianceType    # covariance type
-        # self.bakisLevel = bakisLevel
-
-        # startprobPrior, transmatPrior = self.initByBakis(nComp, bakisLevel)
-        # self.startprobPrior = startprobPrior
-        # self.transmatPrior = transmatPrior
-
-    # # Bakit Model 也称作 从左到右模型
-    # # bakisLevel 用来初始化概率转移矩阵
-    # def initByBakis(self, nComp, bakisLevel):
-    #     ''' init start_prob and transmat_prob by Bakis model '''
-    #     startprobPrior = np.zeros(nComp)
-    #     startprobPrior[:] = 1. / nComp
-
-    #     transmatPrior = self.getTransmatPrior(nComp, bakisLevel)
-
-    #     return startprobPrior, transmatPrior
-
-    # def getTransmatPrior(self, nComp, bakisLevel):
-    #     ''' get transmat prior '''
-    #     transmatPrior = (1. / bakisLevel) * np.eye(nComp)
-
-    #     for i in range(nComp - (bakisLevel - 1)):
-    #         for j in range(bakisLevel - 1):
-    #             transmatPrior[i, i + j + 1] = 1. / bakisLevel
-
-    #     for i in range(nComp - bakisLevel + 1, nComp):
-    #         for j in range(nComp - i - j):
-    #             transmatPrior[i, i + j] = 1. / (nComp - i)
-
-    #     return transmatPrior
-
     def stackTrainData(self):
         if self.flagDataStacked:
             return
@@ -103,6 +60,26 @@ class SpeechRecognizer:
         # 对数组进行堆叠[[frames * [mfccwidth*1]],...] => [[frames x mfccwidth],...]
         self.trainData = np.vstack(self.trainData)
         self.flagDataStacked = True
+
+
+    def saveHmmModel(self):
+        with open("models/md_{0}.pkl".format(self.categoryId), "wb") as file: 
+            pickle.dump(self.hmmModel, file)
+
+    def loadHmmModel(self):
+        with open("models/md_{0}.pkl".format(self.categoryId), "rb") as file: 
+            self.hmmModel = pickle.load(file)
+
+    def initHmmModel(self,load_model=False):
+        '''
+        initHmmModel
+        -----------------
+        初始化Hmm模型，如果load_model为真则加载已有模型
+        '''
+        if load_model:
+            self.loadHmmModel()
+        else:
+            self.getHmmModel()
 
     def getHmmModel(self):
         ''' 进行Gaussian Hmm模型的初始化 '''
@@ -147,7 +124,7 @@ class SpeechRecognizer:
                 pre_state = state_seq[rkj-1]
                 acc_transmat[pre_state][state] = acc_transmat[pre_state][state] + 1
         self.hmmModel.transmat_ = acc_transmat / np.sum(acc_transmat, axis=1)[:, None]
-·2
+        
 def iter_from_X_lengths(X, lengths):
     if lengths is None:
         yield 0, len(X)
