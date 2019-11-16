@@ -3,9 +3,15 @@ import os
 import pickle
 from utils import Speech, SpeechRecognizer
 
+'''
+Attention
+-----------------
+> 需要安装的包在requirements中列出
+> 这里没有使用 1 3 录音人的语料
+'''
+
 CATEGORY = ['0', '1', '2', '3', '4', '5', '6']  # 7 categories
 test_set = {'1', '5', '9'}
-# 注意 这里没有使用 1 3 录音人的语料
 block_person_set = ['1', '3']
 
 def loadData(dirName, train_flag = True):

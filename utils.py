@@ -2,7 +2,6 @@ import pickle
 import re
 from collections import Counter
 from talk.mfcc import mfcc
-import librosa
 from scipy.io import wavfile
 from hmmlearn import hmm
 import numpy as np
