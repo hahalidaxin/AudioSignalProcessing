@@ -1,6 +1,6 @@
 AudioVisionSignalProcessing
 ======================================
-Discription
+Description
 --------------------------------------
 《语音信号处理》Lab3 基于HMM模型实现孤立词识别系统 
 * 本着不重复造轮子的原则，使用hmmlearn库搭建viterbi-BaumWelch的算法框架
